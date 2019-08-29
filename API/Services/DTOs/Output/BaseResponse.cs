@@ -10,6 +10,8 @@ namespace Services.DTOs.Output
 
 		public T Data { get; set; }
 
+		public int Total { get; set; }
+
 		public BaseResponse(HttpStatusCode statusCode, string errorMessage = null, T data = default)
 		{
 			StatusCode = statusCode;

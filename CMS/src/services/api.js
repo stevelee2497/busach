@@ -10,10 +10,9 @@ const api = axios.create({
   },
 });
 
-
 export const fetchCategories = async (page = 1, pageSize = 10) => {
-  const response = await api.get('/categories');
-  const { data } = response.data;
+  const response = await api.get(`/categories?page=${page}&limit=${pageSize}`);
+  const { data } = response;
   return data;
 };
 

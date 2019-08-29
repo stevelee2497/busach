@@ -7,6 +7,7 @@ export default {
     dataSource: [],
     page: 1,
     pageSize: 10,
+    total: 100,
     categoryModalVisible: false,
     selected: undefined
   },
@@ -28,8 +29,8 @@ export default {
   effects: {
     *fetch({ payload }, { call, put, select }) {
       const { page, pageSize } = yield select(state => state.category);
-      const dataSource = yield call(fetchCategories, page, pageSize);
-      yield put({ type: 'save', payload: dataSource });
+      const response = yield call(fetchCategories, page, pageSize);
+      yield put({ type: 'save', payload: response });
     },
     *post({ payload }, { call, put, select }) {
       try {
@@ -63,7 +64,8 @@ export default {
     save(state, { payload }) {
       return {
         ...state,
-        dataSource: payload
+        dataSource: payload.data,
+        total: payload.total
       };
     },
     openCategoryModal(state, { payload }) {
