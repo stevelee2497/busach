@@ -30,7 +30,10 @@ namespace API
 
 			configuration.CreateMap<AuthorInputDto, Author>();
 
-			configuration.CreateMap<Author, AuthorOutputDto>();
+			configuration.CreateMap<Author, AuthorOutputDto>().ForMember(
+				destination => destination.BookCount,
+				map => map.MapFrom(source => source.Books.Count)
+			);
 
 			#endregion
 

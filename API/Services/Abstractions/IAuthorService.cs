@@ -11,6 +11,6 @@ namespace Services.Abstractions
 		BaseResponse<IEnumerable<AuthorOutputDto>> All(IDictionary<string, string> @params);
 		BaseResponse<bool> CreateAuthor(AuthorInputDto authorInputDto);
 		BaseResponse<bool> UpdateAuthor(Guid id, AuthorInputDto authorInputDto);
-		BaseResponse<bool> DeleteAuthor(Guid id, AuthorInputDto authorInputDto);
+		BaseResponse<bool> DeleteAuthor(Guid id);
 	}
 }
