@@ -6,10 +6,10 @@ import moment from 'moment';
 import { reset } from 'redux-form';
 import SimpleNameForm from '../../components/SimpleNameForm';
 
-class Categories extends Component {
+class Authors extends Component {
   handlePageChanged = (page, pageSize) => {
     this.props.dispatch({
-      type: 'category/changePagination',
+      type: 'author/changePagination',
       payload: {
         page,
         pageSize,
@@ -17,24 +17,24 @@ class Categories extends Component {
     });
   };
 
-  openCategoryModal = () => {
+  openAuthorModal = () => {
     this.props.dispatch(reset('nameForm'));
     this.props.dispatch({
-      type: 'category/openCategoryModal',
+      type: 'author/openAuthorModal',
     });
   };
 
-  closeCategoryModal = () => {
+  closeAuthorModal = () => {
     this.props.dispatch({
-      type: 'category/closeCategoryModal'
+      type: 'author/closeAuthorModal'
     });
   };
 
-  handleSubmitCreateCategory = values => {
-    const { selected } = this.props.category;
+  handleSubmitCreateAuthor = values => {
+    const { selected } = this.props.author;
     if (selected) {
       this.props.dispatch({
-        type: 'category/update',
+        type: 'author/update',
         payload: {
           id: selected.id,
           name: values.name
@@ -42,7 +42,7 @@ class Categories extends Component {
       });
     } else {
       this.props.dispatch({
-        type: 'category/post',
+        type: 'author/post',
         payload: {
           name: values.name
         }
@@ -52,19 +52,19 @@ class Categories extends Component {
 
   handleUpdate = record => {
     this.props.dispatch({
-      type: 'category/openCategoryModal',
+      type: 'author/openAuthorModal',
       payload: record
     });
   }
 
   handleDelete = record => {
     Modal.confirm({
-      title: 'Bạn có muốn xóa thể loại này?',
-      content: 'Thể loại: ' + record.name,
+      title: 'Bạn có muốn xóa tác giả này?',
+      content: 'Tác giả: ' + record.name,
       okType: 'danger',
       onOk: () => {
         this.props.dispatch({
-          type: 'category/delete',
+          type: 'author/delete',
           payload: record.id
         });
       },
@@ -108,8 +108,8 @@ class Categories extends Component {
       }
     ];
 
-    const { category, loading } = this.props;
-    const { pageSize, total, page } = category;
+    const { author, loading } = this.props;
+    const { pageSize, total, page, authorModalVisible, selected, dataSource } = author;
 
     const pagination = {
       showSizeChanger: true,
@@ -124,12 +124,12 @@ class Categories extends Component {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
-          <Button type="primary" onClick={this.openCategoryModal}>
+          <Button type="primary" onClick={this.openAuthorModal}>
             Create
           </Button>
         </div>
         <Table
-          dataSource={category.dataSource}
+          dataSource={dataSource}
           columns={columns}
           loading={loading}
           rowKey="id"
@@ -137,16 +137,16 @@ class Categories extends Component {
           bordered
         />
         <SimpleNameForm
-          onSubmit={this.handleSubmitCreateCategory}
-          onCancel={this.closeCategoryModal}
-          visible={category.categoryModalVisible}
+          onSubmit={this.handleSubmitCreateAuthor}
+          onCancel={this.closeAuthorModal}
+          visible={authorModalVisible}
           loading={loading}
           enableReinitialize
-          initialValues={{ name: category.selected && category.selected.name }}
+          initialValues={{ name: selected && selected.name }}
           destroyOnUnmount={false}
           keepDirtyOnReinitialize={true}
-          title="Category"
-          label="Category name"
+          title="Author"
+          label="Author name"
         />
       </div>
     );
@@ -154,8 +154,8 @@ class Categories extends Component {
 }
 
 const mapStateToProps = state => ({
-  category: state.category,
+  author: state.author,
   loading: state.loading.global,
 });
 
-export default connect(mapStateToProps)(Categories);
+export default connect(mapStateToProps)(Authors);

@@ -10,6 +10,8 @@ const api = axios.create({
   },
 });
 
+//#region Categories
+
 export const fetchCategories = async (page = 1, pageSize = 10) => {
   const response = await api.get(`/categories?page=${page}&limit=${pageSize}`);
   const { data } = response;
@@ -33,5 +35,35 @@ export const updateCategory = async (id, name) => {
   const { data } = response.data;
   return data;
 }
+
+//#endregion
+
+//#region Authors
+
+export const fetchAuthors = async (page = 1, pageSize = 10) => {
+  const response = await api.get(`/authors?page=${page}&limit=${pageSize}`);
+  const { data } = response;
+  return data;
+};
+
+export const createAuthor = async (name) => {
+  const response = await api.post('/authors', { name });
+  const { data } = response.data;
+  return data;
+}
+
+export const deleteAuthor = async id => {
+  const response = await api.delete(`/authors/${id}`);
+  const { data } = response.data;
+  return data;
+}
+
+export const updateAuthor = async (id, name) => {
+  const response = await api.put(`/authors/${id}`, { name });
+  const { data } = response.data;
+  return data;
+}
+
+//#endregion
 
 const delay = timeout => new Promise(resolve => setTimeout(resolve, timeout));

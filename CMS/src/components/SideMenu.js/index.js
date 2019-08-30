@@ -3,6 +3,7 @@ import { Layout, Menu, Icon } from 'antd';
 import styles from './index.less'
 import Brand from '../Brand';
 import Link from 'umi/link';
+import images from '../../utils/images';
 
 const { Sider } = Layout;
 
@@ -21,6 +22,12 @@ const SideMenu = ({ collapsed, pathname }) => {
           <Link to="/categories">
             <Icon type="book" />
             <span>Categories</span>
+          </Link>
+        </Menu.Item>
+        <Menu.Item key="/authors">
+          <Link to="/authors">
+            <img src={images.author} alt="" className={styles.author} />
+            <span>Authors</span>
           </Link>
         </Menu.Item>
       </Menu>

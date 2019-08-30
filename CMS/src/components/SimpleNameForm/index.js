@@ -3,24 +3,24 @@ import { Modal, Form, Input } from 'antd';
 import { Field, reduxForm } from 'redux-form';
 
 const renderNameField = (field) => {
-  const { input, meta: { touched, error } } = field;
+  const { input, label, meta: { touched, error } } = field;
   return (
     <Form.Item
-      label="Category Name"
+      label={label}
       required
       help={touched && error}
       validateStatus={touched && error ? 'error' : ''}
     >
-      <Input placeholder="Tên thể loại" {...input} type="text" />
+      <Input {...input} type="text" />
     </Form.Item>
   )
 };
 
-const CategoryModal = props => {
-  const { handleSubmit, onCancel, visible, loading, invalid } = props;
+const SimpleNameForm = props => {
+  const { handleSubmit, onCancel, visible, loading, invalid, label, title } = props;
   return (
     <Modal
-      title="Category"
+      title={title}
       onOk={handleSubmit}
       onCancel={onCancel}
       visible={visible}
@@ -28,7 +28,7 @@ const CategoryModal = props => {
       okButtonProps={{ disabled: invalid }}
     >
       <Form layout="inline" onSubmit={handleSubmit} >
-        <Field name="categoryName" component={renderNameField} label="Category Name" />
+        <Field name="name" component={renderNameField} label={label} />
       </Form>
     </Modal>
   );
@@ -36,13 +36,13 @@ const CategoryModal = props => {
 
 const validate = (values) => {
   const errors = {};
-  if (!values.categoryName) {
-    errors.categoryName = 'Required';
+  if (!values.name) {
+    errors.name = 'Required';
   }
   return errors;
 };
 
 export default reduxForm({
-  form: 'category',
+  form: 'nameForm',
   validate,
-})(CategoryModal);
+})(SimpleNameForm);
