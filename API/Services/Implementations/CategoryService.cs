@@ -9,20 +9,36 @@ using DAL.Models;
 using Services.Abstractions;
 using Services.DTOs.Input;
 using Services.DTOs.Output;
+using Services.Extensions;
 
 namespace Services.Implementations
 {
 	public class CategoryService : EntityService<Category>, ICategoryService
 	{
+		#region GetAllCategories
+
 		public BaseResponse<IEnumerable<CategoryOutputDto>> All(IDictionary<string, string> @params)
 		{
-			var categories = Include(x => x.BookCategories)
-				.Where(x => x.IsActivated())
-				.AsEnumerable()
-				.Select(Mapper.Map<CategoryOutputDto>);
+			var categories = Where(@params, out var total).Select(Mapper.Map<CategoryOutputDto>);
 
-			return new BaseResponse<IEnumerable<CategoryOutputDto>>(HttpStatusCode.OK, data: categories);
+			return new SuccessResponseWithPagination<IEnumerable<CategoryOutputDto>>(total, data: categories);
 		}
+
+		private IEnumerable<Category> Where(IDictionary<string, string> predicate, out int total)
+		{
+			var queries = predicate.ToObject<PagingRequest>();
+
+			total = Where(x => x.IsActivated()).Count();
+
+			return Include(x => x.BookCategories)
+				.Where(x => x.IsActivated())
+				.Skip(queries.Limit * (queries.Page - 1))
+				.Take(queries.Limit);
+		}
+
+		#endregion
+
+		#region Create a category
 
 		public BaseResponse<bool> CreateCategory(CategoryInputDto categoryInputDto)
 		{
@@ -41,6 +57,10 @@ namespace Services.Implementations
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
 
+		#endregion
+
+		#region Create many categories
+
 		public BaseResponse<int> CreateManyCategories(string[] categories)
 		{
 			var existedCategories = Where(x => x.IsActivated()).Select(c => c.Name);
@@ -54,6 +74,10 @@ namespace Services.Implementations
 
 			return new SuccessResponse<int>(nonExistedCategories.Count);
 		}
+
+		#endregion
+
+		#region Update a category
 
 		public BaseResponse<bool> UpdateCategory(Guid id, CategoryInputDto categoryInputDto)
 		{
@@ -73,6 +97,10 @@ namespace Services.Implementations
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
 
+		#endregion
+
+		#region Delete a category
+
 		public BaseResponse<bool> DeleteCategory(Guid id)
 		{
 			var category = Find(id);
@@ -89,5 +117,7 @@ namespace Services.Implementations
 
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
+
+		#endregion
 	}
 }

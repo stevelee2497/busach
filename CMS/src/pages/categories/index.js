@@ -78,18 +78,19 @@ class Categories extends Component {
         title: 'Name',
         dataIndex: 'name',
         defaultSortOrder: 'ascend',
-        sorter: (a, b) => a.name - b.name,
+        sorter: (a, b) => a.name.localeCompare(b.name),
         width: 400,
         className: styles.name
       },
       {
         title: 'Books Count',
-        dataIndex: 'bookCount',
+        render: (text, record) => (<span>{record.bookCount || 0}</span>),
         sorter: (a, b) => a.bookCount - b.bookCount,
       },
       {
         title: 'Created Date',
-        render: (text, record) => (<span>{moment(record.createdDate).format("DD/MM/YYYY")}</span>)
+        render: (text, record) => (<span>{moment(record.createdTime).format("DD/MM/YYYY")}</span>),
+        sorter: (a, b) => moment(a.createdTime) - moment(b.createdTime),
       },
       {
         title: 'Action',
@@ -107,17 +108,18 @@ class Categories extends Component {
       }
     ];
 
+    const { category, loading } = this.props;
+    const { pageSize, total, page } = category;
+
     const pagination = {
       showSizeChanger: true,
       showQuickJumper: true,
-      total: 100,
+      total: total,
       onChange: this.handlePageChanged,
       onShowSizeChange: this.handlePageChanged,
-      defaultPageSize: 10,
-      defaultCurrent: 1,
+      defaultPageSize: pageSize,
+      defaultCurrent: page,
     };
-
-    const { category, loading } = this.props;
 
     return (
       <div className={styles.container}>

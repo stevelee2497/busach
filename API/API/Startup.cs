@@ -14,6 +14,8 @@ using Repositories.Helpers;
 using Services.Extensions;
 using Services.Helpers;
 using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace API
 {
@@ -35,30 +37,15 @@ namespace API
 
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.AddSingleton((IConfigurationRoot)Configuration);
+			services.AddSingleton((IConfigurationRoot) Configuration);
 			services.AddSingleton(Configuration);
 			services.AddCors();
-			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
-			services.AddMvc(options =>
-				{
-					options.Filters.Add<JsonExceptionFilter>();
-					options.Filters.Add(typeof(ValidatorActionFilter));
-				})
-				.AddJsonOptions(options => options.SerializerSettings.NullValueHandling = NullValueHandling.Include);
-
+			services.AddMvc(MvcOptions).AddJsonOptions(JsonOptions).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 			services.AddWebDataLayer();
-
-			services.AddDbContext<DatabaseContext>(options =>
-			{
-				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
-			});
-
-			services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new Info {Title = "Server API", Version = "v1"}); });
-
-			services.AddAuthentication(JwtHelper.ConfigureAuthenticationOptions)
-				.AddJwtBearer(Jwt.DefaultScheme, JwtHelper.ConfigureJwtBearerOptions);
-
+			services.AddDbContext<DatabaseContext>(DbContextOptions);
+			services.AddSwaggerGen(SwaggerConfigs);
+			services.AddAuthentication(JwtHelper.ConfigureAuthenticationOptions).AddJwtBearer(Jwt.DefaultScheme, JwtHelper.ConfigureJwtBearerOptions);
+			JsonConvert.DefaultSettings = JsonConvertDefaultSettings;
 		}
 
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -69,31 +56,23 @@ namespace API
 			}
 
 			ServiceProviderHelper.Init(app.ApplicationServices);
-
 			app.UseStaticFiles();
 			app.UseCookiePolicy();
 			app.UseAuthentication();
 			app.UseSwagger();
-			app.UseSwaggerUI(c =>
-			{
-				c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chat Server Api v1");
-				c.RoutePrefix = string.Empty;
-			});
-
+			app.UseSwaggerUI(SwaggerUIConfig);
 			app.UseCors(ConfigureCors);
 			app.UseMvc();
-
-			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-			{
-				Formatting = Formatting.Indented,
-				DefaultValueHandling = DefaultValueHandling.Ignore,
-				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-				ContractResolver = new CamelCasePropertyNamesContractResolver()
-			};
-
-
 			DbInitializer.DbInitializer.Seed(app.ApplicationServices);
 		}
+
+		private JsonSerializerSettings JsonConvertDefaultSettings() => new JsonSerializerSettings
+		{
+			Formatting = Formatting.Indented,
+			DefaultValueHandling = DefaultValueHandling.Ignore,
+			ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+			ContractResolver = new CamelCasePropertyNamesContractResolver()
+		};
 
 		private void ConfigureCors(CorsPolicyBuilder builder)
 		{
@@ -102,6 +81,34 @@ namespace API
 				.AllowAnyHeader()
 				.AllowAnyMethod()
 				.AllowCredentials();
+		}
+
+		private void MvcOptions(MvcOptions options)
+		{
+			options.Filters.Add<JsonExceptionFilter>();
+			options.Filters.Add(typeof(ValidatorActionFilter));
+		}
+
+		private void JsonOptions(MvcJsonOptions options)
+		{
+			options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+			options.SerializerSettings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
+		}
+
+		private void DbContextOptions(DbContextOptionsBuilder options)
+		{
+			options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+		}
+
+		private void SwaggerConfigs(SwaggerGenOptions c)
+		{
+			c.SwaggerDoc("v1", new Info {Title = "Server API", Version = "v1"});
+		}
+
+		private void SwaggerUIConfig(SwaggerUIOptions c)
+		{
+			c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chat Server Api v1");
+			c.RoutePrefix = string.Empty;
 		}
 	}
 }
