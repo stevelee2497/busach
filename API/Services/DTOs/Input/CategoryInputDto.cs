@@ -1,7 +1,10 @@
-﻿namespace Services.DTOs.Input
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Services.DTOs.Input
 {
 	public class CategoryInputDto
 	{
+		[Required]
 		public string Name { get; set; }
 	}
 }

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using DAL.Extensions;
 
 namespace Services.Implementations
 {
@@ -18,17 +19,30 @@ namespace Services.Implementations
 		{
 		}
 
+		#region Get all authors
+
 		public BaseResponse<IEnumerable<AuthorOutputDto>> All(IDictionary<string, string> @params)
 		{
-			var queries = @params.ToObject<PagingRequest>();
-			var authors = All()
-				.Skip(queries.Limit * (queries.Page - 1))
-				.Take(queries.Limit)
-				.AsEnumerable()
-				.Select(Mapper.Map<AuthorOutputDto>);
+			var authors = Where(@params, out var total).Select(Mapper.Map<AuthorOutputDto>);
 
-			return new BaseResponse<IEnumerable<AuthorOutputDto>>(HttpStatusCode.OK, data: authors);
+			return new SuccessResponseWithPagination<IEnumerable<AuthorOutputDto>>(total, authors);
 		}
+
+		private IEnumerable<Author> Where(IDictionary<string, string> predicate, out int total)
+		{
+			var queries = predicate.ToObject<PagingRequest>();
+
+			total = Where(x => x.IsActivated()).Count();
+
+			return Include(x => x.Books)
+				.Where(x => x.IsActivated())
+				.Skip(queries.Limit * (queries.Page - 1))
+				.Take(queries.Limit);
+		}
+
+		#endregion
+
+		#region Create an author
 
 		public BaseResponse<bool> CreateAuthor(AuthorInputDto authorInputDto)
 		{
@@ -46,6 +60,10 @@ namespace Services.Implementations
 
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
+
+		#endregion
+
+		#region Update an author
 
 		public BaseResponse<bool> UpdateAuthor(Guid id, AuthorInputDto authorInputDto)
 		{
@@ -65,7 +83,11 @@ namespace Services.Implementations
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
 
-		public BaseResponse<bool> DeleteAuthor(Guid id, AuthorInputDto authorInputDto)
+		#endregion
+
+		#region Delete an author
+
+		public BaseResponse<bool> DeleteAuthor(Guid id)
 		{
 			var author = Find(id);
 			if (author == null)
@@ -81,5 +103,7 @@ namespace Services.Implementations
 
 			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
 		}
+
+		#endregion
 	}
 }

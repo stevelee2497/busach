@@ -12,6 +12,6 @@ namespace Services.Abstractions
 		BaseResponse<bool> CreateCategory(CategoryInputDto categoryInputDto);
 		BaseResponse<int> CreateManyCategories(string[] categories);
 		BaseResponse<bool> UpdateCategory(Guid id, CategoryInputDto categoryInputDto);
-		BaseResponse<bool> DeleteCategory(Guid id, CategoryInputDto categoryInputDto);
+		BaseResponse<bool> DeleteCategory(Guid id);
 	}
 }

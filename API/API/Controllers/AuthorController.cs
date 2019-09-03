@@ -45,9 +45,9 @@ namespace API.Controllers
 		[HttpDelete("{id}")]
 		[Authorize]
 		[Produces("application/json")]
-		public BaseResponse<bool> DeleteAuthor(Guid id, [FromBody] AuthorInputDto authorInputDto)
+		public BaseResponse<bool> DeleteAuthor(Guid id)
 		{
-			return _authorService.DeleteAuthor(id, authorInputDto);
+			return _authorService.DeleteAuthor(id);
 		}
 	}
 }
