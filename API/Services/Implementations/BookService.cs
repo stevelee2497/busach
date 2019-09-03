@@ -47,12 +47,14 @@ namespace Services.Implementations
 		{
 			var queries = @params.ToObject<BookRequest>();
 
-			var linqQuery = Where(b => b.IsActivated());
+			var linqQuery = Include(x => x.Author)
+				.Include(x => x.Owner)
+				.Include(x => x.BookCategories).ThenInclude(x => x.Category)
+				.Where(b => b.IsActivated());
+
 			if (queries.CategoryId != Guid.Empty)
 			{
-				linqQuery = _bookCategoryService.Include(bc => bc.Book)
-					.Where(bc => bc.CategoryId == queries.CategoryId && bc.IsActivated() && bc.Book.IsActivated())
-					.Select(bc => bc.Book);
+				linqQuery = linqQuery.Where(b => b.BookCategories.Any(bc => bc.IsActivated() && bc.CategoryId == queries.CategoryId));
 			}
 
 			if (queries.AuthorId != Guid.Empty)

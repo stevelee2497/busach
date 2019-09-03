@@ -1,4 +1,3 @@
-import { notification } from 'antd';
 import { fetchAuthors, createAuthor, deleteAuthor, updateAuthor } from '../services/api';
 
 export default {
@@ -33,17 +32,10 @@ export default {
       yield put({ type: 'save', payload: response });
     },
     *post({ payload }, { call, put, select }) {
-      try {
-        const { name } = payload;
-        yield call(createAuthor, name);
-        yield put({ type: 'closeAuthorModal' });
-        yield put({ type: 'fetch' });
-      } catch (error) {
-        notification['error']({
-          message: 'Ops',
-          description: error.response.data.errorMessage,
-        })
-      }
+      const { name } = payload;
+      yield call(createAuthor, name);
+      yield put({ type: 'closeAuthorModal' });
+      yield put({ type: 'fetch' });
     },
     *delete({ payload: id }, { call, put, select }) {
       yield call(deleteAuthor, id);

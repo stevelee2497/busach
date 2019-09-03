@@ -97,11 +97,11 @@ class Categories extends Component {
         render: (text, record) => {
           return (
             <span>
-              <Button type="link" onClick={() => this.handleUpdate(record)}>Update</Button>
+              <a onClick={() => this.handleUpdate(record)}>Update</a>
               <Divider type="vertical" />
-              <Button type="link">Block</Button>
+              <a >Block</a>
               <Divider type="vertical" />
-              <Button type="link" onClick={() => this.handleDelete(record)}>Delete</Button>
+              <a onClick={() => this.handleDelete(record)}>Delete</a>
             </span>
           );
         },

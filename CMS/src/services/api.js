@@ -66,4 +66,14 @@ export const updateAuthor = async (id, name) => {
 
 //#endregion
 
+//#region Books
+
+export const fetchBooks = async (page = 1, pageSize = 10) => {
+  const response = await api.get(`/books?page=${page}&limit=${pageSize}`);
+  const { data } = response;
+  return data;
+};
+
+//#endregion
+
 const delay = timeout => new Promise(resolve => setTimeout(resolve, timeout));
