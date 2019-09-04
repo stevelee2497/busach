@@ -15,13 +15,13 @@ csvPath = basePath.joinpath('allnovel.net/book.csv')
 
 caps = DesiredCapabilities().FIREFOX
 caps["pageLoadStrategy"] = "eager"
-driver = webdriver.Firefox(executable_path=str(geckodriver), desired_capabilities=caps)
+driver = webdriver.Firefox(executable_path=str(geckodriver))
 
-resetCount = 1000
+resetCount = 300
 
 
-def crawlBook(driver, site):
-
+def crawlBook(site):
+    global driver
     driver.get(site)
     name = driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[1]/div[1]/h1').text
     print(f"Book: {name}")
@@ -32,8 +32,9 @@ def crawlBook(driver, site):
     return {'name': name, 'description': description, 'bookCoverUrl': bookCoverUrl, 'author': author, 'categories': categories, 'path': site}
 
 
-def crawlPageBooks(driver, category, page):
+def crawlPageBooks(category, page):
     data = []
+    global driver
     driver.get(baseUrl.format(category, page))
     books = driver.find_elements_by_xpath(bookXPath)
     sites = [book.get_attribute('href') for book in books]
@@ -41,24 +42,25 @@ def crawlPageBooks(driver, category, page):
         global resetCount
         resetCount -= 1
         if resetCount == 0:
-            resetCount = 1000
+            resetCount = 300
             driver.quit()
             driver = webdriver.Firefox(executable_path=str(geckodriver), desired_capabilities=caps)
-            time.sleep(0.5)
-        book = crawlBook(driver, site)
+
+        book = crawlBook(site)
         data.append(book)
     dataFrame = pandas.DataFrame(columns=columns, data=data)
     dataFrame.to_csv(csvPath, mode='a', header=False, index=False)
 
 
-def crawlCategoryBooks(driver, category):
+def crawlCategoryBooks(category):
+    global driver
     print("====================================")
     print(f"Crawl books from category {category}")
     driver.get(baseUrl.format(category, 1))
     pages = int(driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[2]/ul/li[1]/a').text.split('/')[1]) // 18 + 1
     for page in range(1, pages + 1):
         print(f"{category}: page {page}/{pages}")
-        crawlPageBooks(driver, category, page)
+        crawlPageBooks(category, page)
 
 
 def initializeCSV():
@@ -68,7 +70,7 @@ def initializeCSV():
 
 def main():
     for category in categories:
-        crawlCategoryBooks(driver, category)
+        crawlCategoryBooks(category)
 
 
 initializeCSV()
