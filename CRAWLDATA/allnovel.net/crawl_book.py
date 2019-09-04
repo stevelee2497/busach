@@ -1,5 +1,6 @@
 from pathlib import Path
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import time
 import pandas
 
@@ -11,13 +12,16 @@ basePath = Path(__file__).absolute().parent.parent
 columns = ['name', 'description', 'bookCoverUrl', 'author', 'categories', 'path']
 geckodriver = basePath.joinpath('geckodriver.exe')
 csvPath = basePath.joinpath('allnovel.net/book.csv')
-driver = webdriver.Firefox(executable_path=str(geckodriver))
+
+caps = DesiredCapabilities().FIREFOX
+caps["pageLoadStrategy"] = "eager"
+driver = webdriver.Firefox(executable_path=str(geckodriver), desired_capabilities=caps)
 
 
-def crawlSiteData(driver, site):
+def crawlBook(driver, site):
     driver.get(site)
-    time.sleep(0.3)
     name = driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[1]/div[1]/h1').text
+    print(f"Book: {name}")
     description = '\r\n'.join([el.text for el in driver.find_elements_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[2]/div[1]/div[2]/p')])
     bookCoverUrl = driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[1]/div[2]/div/div[1]/img').get_attribute('src')
     author = driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[1]/div[2]/div/div[2]/div[1]/a').text
@@ -31,8 +35,11 @@ def crawlPageBooks(driver, category, page):
     books = driver.find_elements_by_xpath(bookXPath)
     sites = [book.get_attribute('href') for book in books]
     for site in sites:
-        book = crawlSiteData(driver, site)
-        data.append(book)
+        try:
+            book = crawlBook(driver, site)
+            data.append(book)
+        except Exception:
+            pass
     dataFrame = pandas.DataFrame(columns=columns, data=data)
     dataFrame.to_csv(csvPath, mode='a', header=False, index=False)
 
