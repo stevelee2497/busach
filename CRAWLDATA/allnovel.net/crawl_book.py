@@ -17,8 +17,11 @@ caps = DesiredCapabilities().FIREFOX
 caps["pageLoadStrategy"] = "eager"
 driver = webdriver.Firefox(executable_path=str(geckodriver), desired_capabilities=caps)
 
+resetCount = 1000
+
 
 def crawlBook(driver, site):
+
     driver.get(site)
     name = driver.find_element_by_xpath('//*[@id="content-wrapper"]/div/div[1]/div/div[1]/div[1]/h1').text
     print(f"Book: {name}")
@@ -35,11 +38,15 @@ def crawlPageBooks(driver, category, page):
     books = driver.find_elements_by_xpath(bookXPath)
     sites = [book.get_attribute('href') for book in books]
     for site in sites:
-        try:
-            book = crawlBook(driver, site)
-            data.append(book)
-        except Exception:
-            pass
+        global resetCount
+        resetCount -= 1
+        if resetCount == 0:
+            resetCount = 1000
+            driver.quit()
+            driver = webdriver.Firefox(executable_path=str(geckodriver), desired_capabilities=caps)
+            time.sleep(0.5)
+        book = crawlBook(driver, site)
+        data.append(book)
     dataFrame = pandas.DataFrame(columns=columns, data=data)
     dataFrame.to_csv(csvPath, mode='a', header=False, index=False)
 
@@ -66,5 +73,3 @@ def main():
 
 initializeCSV()
 main()
-
-driver.close()
