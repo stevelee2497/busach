@@ -1,5 +1,6 @@
 import {
-  fetchBooks
+  fetchBooks,
+  createBook
 } from '../services/api';
 
 export default {
@@ -9,7 +10,7 @@ export default {
     page: 1,
     pageSize: 10,
     total: 100,
-    bookFormVisible: false,
+    bookFormVisible: true,
     selected: undefined
   },
   subscriptions: {
@@ -33,12 +34,12 @@ export default {
       const response = yield call(fetchBooks, page, pageSize);
       yield put({ type: 'save', payload: response });
     },
-    // *post({ payload }, { call, put, select }) {
-    //   const { name } = payload;
-    //   yield call(createAuthor, name);
-    //   yield put({ type: 'closeAuthorModal' });
-    //   yield put({ type: 'fetch' });
-    // },
+    *post({ payload }, { call, put, select }) {
+      const { book } = payload;
+      yield call(createBook, book);
+      yield put({ type: 'closeBookForm' });
+      yield put({ type: 'fetch' });
+    },
     // *delete({ payload: id }, { call, put, select }) {
     //   yield call(deleteAuthor, id);
     //   yield put({ type: 'fetch' });

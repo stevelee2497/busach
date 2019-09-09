@@ -74,6 +74,12 @@ export const fetchBooks = async (page = 1, pageSize = 10) => {
   return data;
 };
 
+export const createBook = async book => {
+  const response = await api.post('/books', book);
+  const { data } = response.data;
+  return data;
+}
+
 //#endregion
 
 const delay = timeout => new Promise(resolve => setTimeout(resolve, timeout));

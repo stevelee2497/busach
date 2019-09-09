@@ -1,7 +1,8 @@
+import React from "react";
 import { Modal, Form, Input } from "antd";
 import { Field, reduxForm } from 'redux-form';
 
-const renderNameField = (field) => {
+const renderField = (field) => {
   const { input, label, meta: { touched, error } } = field;
   return (
     <Form.Item
@@ -16,7 +17,7 @@ const renderNameField = (field) => {
 };
 
 const BookForm = props => {
-  const { handleSubmit, onCancel, visible, loading, invalid, label, title } = props;
+  const { handleSubmit, onCancel, visible, loading, invalid, title } = props;
   return (
     <Modal
       title={title}
@@ -25,8 +26,25 @@ const BookForm = props => {
       visible={visible}
       confirmLoading={loading}
       okButtonProps={{ disabled: invalid }}
+      width={700}
     >
-      <Form layout="inline" onSubmit={handleSubmit} >
+      <Form
+        labelCol={{
+          xs: { span: 24 },
+          sm: { span: 8 },
+        }}
+        wrapperCol={{
+          xs: { span: 24 },
+          sm: { span: 16 },
+        }}
+        style={{ padding: 20 }}
+        onSubmit={handleSubmit} >
+        <Field name="name" component={renderField} label="Book Name" />
+        <Field name="description" component={renderField} label="Description" />
+        <Field name="bookCoverUrl" component={renderField} label="Book Cover Url" />
+        <Field name="owner" component={renderField} label="Owner" />
+        <Field name="author" component={renderField} label="Author" />
+        <Field name="categories" component={renderField} label="Categories" />
       </Form>
     </Modal>
   );

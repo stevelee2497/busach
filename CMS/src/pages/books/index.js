@@ -6,9 +6,9 @@ import { reset } from 'redux-form';
 import BookForm from '../../components/BookForm';
 
 const Books = props => {
-  const { loading, book, handleUpdate, handleSubmitCreateCategory, handleDelete } = props;
+  const { loading, book, handleUpdate, handleSubmitBookForm, handleDelete } = props;
 
-  const { dataSource, pageSize, total, page, bookFormVisible } = book;
+  const { dataSource, pageSize, total, page, bookFormVisible, selected } = book;
 
   const columns = [
     {
@@ -76,7 +76,7 @@ const Books = props => {
       />
       <BookForm
         visible={bookFormVisible}
-        onSubmit={handleSubmitCreateCategory}
+        onSubmit={(values) => handleSubmitBookForm(values, selected)}
         onCancel={props.closeBookForm}
         title="Book"
         enableReinitialize
@@ -110,7 +110,23 @@ const mapDispatchToProps = dispatch => ({
   },
   handleDelete: record => {
   },
-  handleSubmitCreateCategory: () => {
+  handleSubmitBookForm: (values, selected) => {
+    if (selected) {
+      dispatch({
+        type: 'book/update',
+        payload: {
+          id: selected.id,
+          book: values
+        }
+      });
+    } else {
+      dispatch({
+        type: 'book/post',
+        payload: {
+          book: values
+        }
+      });
+    }
   }
 });
 
