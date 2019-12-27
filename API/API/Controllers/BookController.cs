@@ -43,6 +43,15 @@ namespace API.Controllers
 			return _bookService.CreateBook(bookInputDto);
 		}
 
+		[HttpPost("import")]
+		[Authorize]
+		[Produces("application/json")]
+		public BaseResponse<IEnumerable<BookOutputDto>> CreateMany([FromBody] IEnumerable<BookInputDto> booksInputDto)
+		{
+			var userId = User.GetUserId();
+			return _bookService.CreateMany(userId, booksInputDto);
+		}
+
 		[HttpPut("{id}")]
 		[Authorize]
 		[Produces("application/json")]

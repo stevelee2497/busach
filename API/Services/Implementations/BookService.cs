@@ -17,14 +17,24 @@ namespace Services.Implementations
 {
 	public class BookService : EntityService<Book>, IBookService
 	{
+		#region Fields
+
 		private readonly ILikeService _likeService;
 		private readonly IBookCategoryService _bookCategoryService;
+
+		#endregion
+
+		#region Constructor
 
 		public BookService(IBookCategoryService bookCategoryService, ILikeService likeService)
 		{
 			_bookCategoryService = bookCategoryService;
 			_likeService = likeService;
 		}
+
+		#endregion
+
+		#region Get books
 
 		public BaseResponse<IEnumerable<BookOutputDto>> All(IDictionary<string, string> @params)
 		{
@@ -33,103 +43,18 @@ namespace Services.Implementations
 			return new BaseResponse<IEnumerable<BookOutputDto>>(HttpStatusCode.OK, data: books);
 		}
 
-		public BaseResponse<BookOutputDto> GetBook(Guid id, Guid userId)
-		{
-			var book = Include(x => x.Author)
-				.Include(x => x.Owner)
-				.Include(x => x.BookCategories).ThenInclude(x => x.Category)
-				.FirstOrDefault(x => x.Id == id);
-
-			if (book == null)
-			{
-				throw new BadRequestException($"Không tìm thấy tác phẩm với id: {id}");
-			}
-
-			var bookOutputDto = Mapper.Map<BookOutputDto>(book);
-			var liked = _likeService.FirstOrDefault(x => x.BookId == id && x.UserId == userId)?.IsActivated() ?? false;
-			bookOutputDto.Liked = liked;
-
-			return new SuccessResponse<BookOutputDto>(bookOutputDto);
-		}
-
-		public BaseResponse<BookOutputDto> CreateBook(BookInputDto bookInputDto)
-		{
-			if (Contains(x => x.Name.Equals(bookInputDto.Name, StringComparison.InvariantCultureIgnoreCase)))
-			{
-				throw new BadRequestException($"Tác phẩm {bookInputDto.Name} đã tồn tại");
-			}
-
-			var book = Mapper.Map<Book>(bookInputDto);
-			book = Create(book, out var isSaved);
-			if (!isSaved)
-			{
-				throw new BadRequestException($"Không thể tạo tác phẩm {book.Name}");
-			}
-
-			var bookCategories = _bookCategoryService.CreateMany(bookInputDto.CategoryIds.Select(categoryId =>
-				new BookCategory
-				{
-					BookId = book.Id,
-					CategoryId = Guid.Parse(categoryId)
-				}), out isSaved);
-
-			if (!isSaved)
-			{
-				throw new BadRequestException($"Không thể set category cho tác phẩm {book.Name}");
-			}
-
-			book.BookCategories = bookCategories as ICollection<BookCategory>;
-
-			return new BaseResponse<BookOutputDto>(HttpStatusCode.OK, data: Mapper.Map<BookOutputDto>(book));
-		}
-
-		public BaseResponse<bool> UpdateBook(Guid id, BookInputDto bookInputDto)
-		{
-			var oldBook = Find(id);
-			var newBook = Mapper.Map<Book>(bookInputDto);
-			if (oldBook == null)
-			{
-				throw new BadRequestException($"Không tìm thấy tác phẩm {id}");
-			}
-
-			oldBook = UpdateBookInformation(oldBook, newBook, out var isSaved);
-			oldBook = UpdateBookCategories(oldBook, bookInputDto.CategoryIds.Select(Guid.Parse).ToList(), ref isSaved);
-
-			if (!isSaved)
-			{
-				throw new InternalServerErrorException($"Không thể update cho tác phẩm {oldBook.Name}");
-			}
-
-			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
-		}
-
-		public BaseResponse<bool> DeleteBook(Guid id)
-		{
-			var book = Find(id);
-			if (book == null)
-			{
-				throw new BadRequestException($"Không tìm thấy tác phẩm {id}");
-			}
-
-			var isDeleted = Delete(book);
-			if (!isDeleted)
-			{
-				throw new InternalServerErrorException($"Không thể delete tác phẩm {book.Name}");
-			}
-
-			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
-		}
-
 		private IEnumerable<Book> Where(IDictionary<string, string> @params)
 		{
 			var queries = @params.ToObject<BookRequest>();
 
-			var linqQuery = Where(b => b.IsActivated());
+			var linqQuery = Include(x => x.Author)
+				.Include(x => x.Owner)
+				.Include(x => x.BookCategories).ThenInclude(x => x.Category)
+				.Where(b => b.IsActivated());
+
 			if (queries.CategoryId != Guid.Empty)
 			{
-				linqQuery = _bookCategoryService.Include(bc => bc.Book)
-					.Where(bc => bc.CategoryId == queries.CategoryId && bc.IsActivated() && bc.Book.IsActivated())
-					.Select(bc => bc.Book);
+				linqQuery = linqQuery.Where(b => b.BookCategories.Any(bc => bc.IsActivated() && bc.CategoryId == queries.CategoryId));
 			}
 
 			if (queries.AuthorId != Guid.Empty)
@@ -168,6 +93,142 @@ namespace Services.Implementations
 			}
 		}
 
+		#endregion
+
+		#region Get a book
+
+		public BaseResponse<BookOutputDto> GetBook(Guid id, Guid userId)
+		{
+			var book = Include(x => x.Author)
+				.Include(x => x.Owner)
+				.Include(x => x.BookCategories).ThenInclude(x => x.Category)
+				.FirstOrDefault(x => x.Id == id);
+
+			if (book == null)
+			{
+				throw new BadRequestException($"Không tìm thấy tác phẩm với id: {id}");
+			}
+
+			var bookOutputDto = Mapper.Map<BookOutputDto>(book);
+			var liked = _likeService.FirstOrDefault(x => x.BookId == id && x.UserId == userId)?.IsActivated() ?? false;
+			bookOutputDto.Liked = liked;
+
+			return new SuccessResponse<BookOutputDto>(bookOutputDto);
+		}
+
+		#endregion
+
+		#region Create a book
+
+		public BaseResponse<BookOutputDto> CreateBook(BookInputDto bookInputDto)
+		{
+			if (Contains(x => x.Name.Equals(bookInputDto.Name, StringComparison.InvariantCultureIgnoreCase)))
+			{
+				throw new BadRequestException($"Tác phẩm {bookInputDto.Name} đã tồn tại");
+			}
+
+			var book = Mapper.Map<Book>(bookInputDto);
+			book = Create(book, out var isSaved);
+			if (!isSaved)
+			{
+				throw new BadRequestException($"Không thể tạo tác phẩm {book.Name}");
+			}
+
+			var bookCategories = _bookCategoryService.CreateMany(bookInputDto.CategoryIds.Select(categoryId =>
+				new BookCategory
+				{
+					BookId = book.Id,
+					CategoryId = Guid.Parse(categoryId)
+				}), out isSaved);
+
+			if (!isSaved)
+			{
+				throw new BadRequestException($"Không thể set category cho tác phẩm {book.Name}");
+			}
+
+			book.BookCategories = bookCategories as ICollection<BookCategory>;
+
+			return new BaseResponse<BookOutputDto>(HttpStatusCode.OK, data: Mapper.Map<BookOutputDto>(book));
+		}
+
+		#endregion
+
+		#region Import books
+
+		public BaseResponse<IEnumerable<BookOutputDto>> CreateMany(Guid userId, IEnumerable<BookInputDto> booksInputDto)
+		{
+			var existedBooks = Where(b => booksInputDto.Any(dto => dto.Name.Equals(b.Name, StringComparison.InvariantCultureIgnoreCase)));
+			var nonExistedBooks = FilterNonExistedBooks(booksInputDto, existedBooks);
+			var createdBooks = CreateMany(SelectBookEntities(nonExistedBooks, userId), out var isSaved).ToList();
+			if (!isSaved)
+			{
+				throw new BadRequestException($"Không thể import books");
+			}
+
+			// import categories for created books
+			var bookCategories = SelectBookCategories(createdBooks, nonExistedBooks);
+			_bookCategoryService.CreateMany(bookCategories, out isSaved);
+			if (!isSaved)
+			{
+				throw new BadRequestException($"Không thể import books");
+			}
+
+			return new SuccessResponse<IEnumerable<BookOutputDto>>(createdBooks.Select(Mapper.Map<BookOutputDto>));
+		}
+
+		private static List<BookInputDto> FilterNonExistedBooks(IEnumerable<BookInputDto> booksInputDto, IQueryable<Book> existedBooks)
+		{
+			return booksInputDto
+				.Where(dto => existedBooks.All(book => !book.Name.Equals(dto.Name, StringComparison.InvariantCultureIgnoreCase)))
+				.ToList();
+		}
+
+		private IEnumerable<Book> SelectBookEntities(List<BookInputDto> nonExistedBooks, Guid userId)
+		{
+			return nonExistedBooks.Select(x =>
+			{
+				var b = Mapper.Map<Book>(x);
+				b.OwnerId = userId;
+				return b;
+			});
+		}
+
+		private IEnumerable<BookCategory> SelectBookCategories(List<Book> createdBooks, IEnumerable<BookInputDto> nonExistedBooks)
+		{
+			foreach (var nonExistedBook in nonExistedBooks)
+			{
+				var createdBook = createdBooks.First(b => b.Name.Equals(nonExistedBook.Name, StringComparison.InvariantCultureIgnoreCase));
+				foreach (var categoryId in nonExistedBook.CategoryIds)
+				{
+					yield return new BookCategory { BookId = createdBook.Id, CategoryId = Guid.Parse(categoryId) };
+				}
+			}
+		}
+
+		#endregion
+
+		#region Update a book
+
+		public BaseResponse<bool> UpdateBook(Guid id, BookInputDto bookInputDto)
+		{
+			var oldBook = Find(id);
+			var newBook = Mapper.Map<Book>(bookInputDto);
+			if (oldBook == null)
+			{
+				throw new BadRequestException($"Không tìm thấy tác phẩm {id}");
+			}
+
+			oldBook = UpdateBookInformation(oldBook, newBook, out var isSaved);
+			oldBook = UpdateBookCategories(oldBook, bookInputDto.CategoryIds.Select(Guid.Parse).ToList(), ref isSaved);
+
+			if (!isSaved)
+			{
+				throw new InternalServerErrorException($"Không thể update cho tác phẩm {oldBook.Name}");
+			}
+
+			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
+		}
+
 		private Book UpdateBookInformation(Book oldBook, Book newBook, out bool isSaved)
 		{
 			oldBook.Name = newBook.Name;
@@ -187,7 +248,7 @@ namespace Services.Implementations
 			if (newIdsAdded.Any())
 			{
 				_bookCategoryService.CreateMany(
-					newIdsAdded.Select(id => new BookCategory {CategoryId = id, BookId = oldBook.Id}), out isSaved
+					newIdsAdded.Select(id => new BookCategory { CategoryId = id, BookId = oldBook.Id }), out isSaved
 				);
 			}
 
@@ -200,5 +261,29 @@ namespace Services.Implementations
 
 			return oldBook;
 		}
+
+		#endregion
+
+		#region Delete a book
+
+		public BaseResponse<bool> DeleteBook(Guid id)
+		{
+			var book = Find(id);
+			if (book == null)
+			{
+				throw new BadRequestException($"Không tìm thấy tác phẩm {id}");
+			}
+
+			var isDeleted = Delete(book);
+			if (!isDeleted)
+			{
+				throw new InternalServerErrorException($"Không thể delete tác phẩm {book.Name}");
+			}
+
+			return new BaseResponse<bool>(HttpStatusCode.OK, data: true);
+		}
+
+
+		#endregion
 	}
 }

@@ -5,18 +5,15 @@ using DAL.Models;
 using Services.Abstractions;
 using Services.DTOs.Input;
 using Services.DTOs.Output;
-using System;
 using DAL.Extensions;
 
 namespace Services.Implementations
 {
 	public class LikeService : EntityService<Like>, ILikeService
 	{
-		private readonly IBookService _bookService;
 
-		public LikeService(IBookService bookService)
+		public LikeService()
 		{
-			_bookService = bookService;
 		}
 
 		public BaseResponse<LikeOutputDto> ChangeLikeStatus(LikeInputDto likeInputDto)
@@ -40,10 +37,6 @@ namespace Services.Implementations
 					throw new InternalServerErrorException("Something went wrong, try again later");
 				}
 			}
-
-			var book = _bookService.Find(Guid.Parse(likeInputDto.BookId));
-			book.LikedCount += likeFound.IsActivated() ? 1 : -1;
-			_bookService.Update(book);
 
 			return new SuccessResponse<LikeOutputDto>(Mapper.Map<LikeOutputDto>(likeFound));
 		}
